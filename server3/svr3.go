@@ -13,6 +13,24 @@ var p *pilot
 type pilot struct {
 	patterns map[*Node]Handler
 	nodeRoot *Node
+	*RouteGroup
+}
+
+type RouteGroup struct {
+	path     string
+	parent   *RouteGroup
+	children map[string]*RouteGroup
+}
+
+func (rg *RouteGroup) AddGroup(part string) *RouteGroup {
+
+	rg.children[part] = &RouteGroup{
+		path:     rg.path + part,
+		parent:   rg,
+		children: make(map[string]*RouteGroup),
+	}
+	return rg.children[part]
+
 }
 
 type Context struct {
@@ -39,13 +57,12 @@ func (c *Context) JSON(statusCode int, data H) {
 }
 
 func (c *Context) String(statusCode int, text string, a ...interface{}) {
-	fmt.Println(a)
 	c.w.WriteHeader(statusCode)
 
 	fmt.Fprintf(c.w, text, a...)
 }
 
-func (c *Context) Param(key string) string{
+func (c *Context) Param(key string) string {
 	return c.Params[key]
 }
 
@@ -69,6 +86,9 @@ func (n *Node) addChild(part string) *Node {
 func (n *Node) insert(pattern string, parts []string, idx int) *Node {
 
 	if idx == len(parts) {
+		if n.path != "" {
+			return nil
+		}
 		n.path = pattern
 		return n
 	}
@@ -86,7 +106,7 @@ func (n *Node) insert(pattern string, parts []string, idx int) *Node {
 func (n *Node) isMatch(part string) []string {
 
 	res := make([]string, 0)
-	for k, _ := range n.children {
+	for k := range n.children {
 		if k == part || strings.HasPrefix(k, ":") || strings.HasPrefix(k, "*") {
 			res = append(res, k)
 		}
@@ -175,6 +195,9 @@ func GET(pattern string, handler func(c *Context)) error {
 	}
 
 	n := p.nodeRoot.insert(pattern, parts, 0)
+	if n == nil {
+		return errors.New(fmt.Sprintf("the router %s is existed", pattern))
+	}
 	p.patterns[n] = handler
 	return nil
 }
@@ -187,6 +210,9 @@ func New() {
 			part:     "",
 			children: make(map[string]*Node),
 			isWild:   false,
+		},
+		RouteGroup: &RouteGroup{
+			children: make(map[string]*RouteGroup),
 		},
 	}
 }

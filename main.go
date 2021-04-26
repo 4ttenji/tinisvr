@@ -21,18 +21,18 @@ func main1() {
 
 func main2() {
 
-	// init the internel http server
+	// init the internal http server
 	_ = server2.New()
 
-	server2.GET("/", func(c *server2.Context) {
+	_ = server2.GET("/", func(c *server2.Context) {
 		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
 	})
-	server2.GET("/hello", func(c *server2.Context) {
-		// expect /hello?name=geektutu
+	_ = server2.GET("/hello", func(c *server2.Context) {
+		// expect /hello?name=ten
 		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
 	})
 
-	server2.POST("/login", func(c *server2.Context) {
+	_ = server2.POST("/login", func(c *server2.Context) {
 		c.JSON(http.StatusOK, server2.H{
 			"password": c.PostForm("password"),
 			"username": c.PostForm("username"),
@@ -46,23 +46,39 @@ func main2() {
 func main3() {
 
 	server3.New()
-	server3.GET("/", func(c *server3.Context) {
+	var err error
+	if err = server3.GET("/", func(c *server3.Context) {
 		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
-	})
+	});err != nil{
+		fmt.Println(err)
+	}
 
-	server3.GET("/hello/:name", func(c *server3.Context) {
-		// expect /hello/geektutu
+	if err = server3.GET("/hello/:name", func(c *server3.Context) {
+		// expect /hello/ten
 		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Param("name"), c.Path)
-	})
+	});err != nil{
+		fmt.Println(err)
+	}
 
-	server3.GET("/hello", func(c *server3.Context) {
-		// expect /hello?name=geektutu
+	if err = server3.GET("/hello/:name", func(c *server3.Context) {
+		// expect /hello/ten
+		c.String(http.StatusOK, "hello %s, I'm at %s\n", c.Param("name"), c.Path)
+	});err != nil{
+		fmt.Println(err)
+	}
+
+	if err = server3.GET("/hello", func(c *server3.Context) {
+		// expect /hello?name=ten
 		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
-	})
+	});err != nil{
+		fmt.Println(err)
+	}
 
-	server3.GET("/assets/*filepath", func(c *server3.Context) {
+	if err = server3.GET("/assets/*filepath", func(c *server3.Context) {
 		c.JSON(http.StatusOK, server3.H{"filepath": c.Param("filepath")})
-	})
+	});err != nil{
+		fmt.Println(err)
+	}
 
 	server3.Run(":9998")
 
