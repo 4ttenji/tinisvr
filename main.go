@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/4ttenji/tinisvr/handler"
-	"github.com/4ttenji/tinisvr/server"
+	"github.com/4ttenji/tinisvr/server2"
+	"github.com/4ttenji/tinisvr/server3"
 	"net/http"
 )
 
-func main_old() {
+func main1() {
 	// set the http request handler using http.HandleFunc
 	http.HandleFunc("/", handler.IndexHandler)
 
@@ -18,19 +19,57 @@ func main_old() {
 	}
 }
 
-func main() {
+func main2() {
 
 	// init the internel http server
-	_ = server.New()
+	_ = server2.New()
 
-	server.Add("/startup", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Got it! The req to %s", r.URL.Path)
-	}))
+	server2.GET("/", func(c *server2.Context) {
+		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
+	})
+	server2.GET("/hello", func(c *server2.Context) {
+		// expect /hello?name=geektutu
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
+	})
 
-	server.Add("/quit", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Got it! The req to %s, bye-bye", r.URL.Path)
-	}))
+	server2.POST("/login", func(c *server2.Context) {
+		c.JSON(http.StatusOK, server2.H{
+			"password": c.PostForm("password"),
+			"username": c.PostForm("username"),
+		})
+	})
 
-	server.Run(":8085")
+	server2.Run(":8085")
 
+}
+
+func main3() {
+
+	server3.New()
+	server3.GET("/", func(c *server3.Context) {
+		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
+	})
+
+	server3.GET("/hello/:name", func(c *server3.Context) {
+		// expect /hello/geektutu
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Param("name"), c.Path)
+	})
+
+	server3.GET("/hello", func(c *server3.Context) {
+		// expect /hello?name=geektutu
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
+	})
+
+	server3.GET("/assets/*filepath", func(c *server3.Context) {
+		c.JSON(http.StatusOK, server3.H{"filepath": c.Param("filepath")})
+	})
+
+	server3.Run(":9998")
+
+}
+
+func main() {
+	// main1()
+	// main2()
+	main3()
 }
